@@ -1,0 +1,10 @@
+substitutions:
+  id: "1234"                # CHANGE THIS: Unique identifier that should be set for each device
+  name: target-${id}             
+  friendly_name: "Target ${id}"
+
+wifi:
+  # AP configuration
+  ap:
+    ssid: ${name}
+    password: "target123"  # Set a password for security
