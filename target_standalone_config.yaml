@@ -7,4 +7,4 @@ wifi:
   # AP configuration
   ap:
     ssid: ${name}
-    password: "target123"  # Set a password for security
+    password: "target123"  

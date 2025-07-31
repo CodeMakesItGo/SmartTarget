@@ -11,6 +11,9 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   
+  # Disable network scanning for better performance
+  fast_connect: true 
+  
   # Option 1: Static IP (recommended for targets)
   manual_ip:
     static_ip: ${ip_addr}
@@ -26,11 +29,12 @@ wifi:
   # Fallback AP configuration
   ap:
     ssid: ${name}
-    password: "target123"  # Set a password for security
+    password: !secret wifi_password  # Set a password for security
   
   # Connection management
   reboot_timeout: 0s        # Disable auto-reboot on WiFi loss
   power_save_mode: none     # Disable power saving for reliability
+  output_power: 20dB        # Maximum WiFi power for best range
   
   on_connect:
     then:
