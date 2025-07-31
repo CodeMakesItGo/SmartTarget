@@ -40,9 +40,10 @@ packages:
     
   # Change this manually when changing target_type:
   # - For standalone: uncomment the next line
-  #config_file: !include target_standalone_config.yaml
-  # - For networked: uncomment the next line
-  config_file: !include target_home_assistant_config.yaml
+  config_file: !include target_standalone_config.yaml
+  
+  # - For networked: uncomment the next two lines
+  #config_file: !include target_networked_config.yaml
 
 # ==============================================================================
 # CORE CONFIGURATION

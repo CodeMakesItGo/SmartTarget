@@ -1,0 +1,71 @@
+packages:
+  target_scripts: !include target_networked_scripts.yaml
+
+substitutions:
+  # Target configuration - user must set IP for each device
+  ip: "2"                       # CHANGE THIS: Last part of IP address (02-99)
+    # Network Configuration
+  ip_base: 192.168.8.
+  ip_addr: ${ip_base}${ip}       # Results in 192.168.8.01, 192.168.8.02, etc.
+  name: target-${ip}             # Use IP-based naming for now
+  friendly_name: "Target ${ip}"
+  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  
+  # Disable network scanning for better performance
+  fast_connect: true 
+  
+  # Option 1: Static IP (recommended for targets)
+  manual_ip:
+    static_ip: ${ip_addr}
+    gateway: ${ip_base}1
+    subnet: 255.255.255.0
+    dns1: ${ip_base}1
+    dns2: 8.8.8.8
+  
+  # Option 2: For DHCP, comment out manual_ip section above
+  # and uncomment the following:
+  # use_address: ${ip_addr}  # Optional: forces specific IP via DHCP reservation
+  
+  # Fallback AP configuration
+  ap:
+    ssid: ${name}
+    password: !secret wifi_password  # Set a password for security
+  
+  # Connection management
+  reboot_timeout: 0s        # Disable auto-reboot on WiFi loss
+  power_save_mode: none     # Disable power saving for reliability
+  output_power: 20dB        # Maximum WiFi power for best range
+  
+  on_connect:
+    then:
+      - logger.log: "WiFi connected successfully"
+      - light.turn_on:
+          id: led_strip
+          effect: "Scanner Effect"
+  
+  on_disconnect:
+    then:
+      - logger.log: "WiFi disconnected"
+
+# Enable Home Assistant API
+api:
+
+# Captive portal for setting up Wi-Fi via AP
+captive_portal:
+
+# Import configuration package
+dashboard_import:
+  package_import_url: github://esphome/example-configs/esphome-web/esp32.yaml@main
+  import_full_config: true
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal Strength"
+    update_interval: 60s
+    filters:
+      - sliding_window_moving_average:
+          window_size: 5
+          send_every: 5
