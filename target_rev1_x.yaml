@@ -3,7 +3,6 @@
 # ==============================================================================
 substitutions:
   # Hardware Configuration
-  strip_2_led_count: "50"        # Number of LEDs in secondary strip 
   hit_display_time: "3000"       # Time to display hit effect
   default_relay_time: "3000"     # Relay activation time after hit in milliseconds
   default_cooldown_time: "1000"  # Time target is inactive after hit in milliseconds
@@ -13,24 +12,26 @@ substitutions:
   led_gpio: GPIO5        # Main target LED strip
   ir_gpio: GPIO19        # IR receiver
   relay_gpio: GPIO23     # Relay output
-  aux_pwr_gpio: GPIO26   # Auxiliary power control
 
   # Right Side Connector Pins
   tx_gpio: GPIO01        # UART TX
   rx_gpio: GPIO03        # UART RX
-  io16_gpio: GPIO16      # General I/O
-  io17_gpio: GPIO17      # General I/O
+  io22_gpio: GPIO22      # General I/O
+  io21_gpio: GPIO21      # General I/O
   io25_gpio: GPIO25      # General I/O
-  io34_gpio: GPIO34      # ADC input (input only)
+  io32_gpio: GPIO32      # General I/O
   
   # Left Side Connector Pins
-  switch_12v: GPIO33     # 12V switch control
-  led2_gpio: GPIO22      # Secondary LED strip
-  servo_gpio: GPIO04     # Servo control
-  
+  io33_gpio: GPIO33      # General I/O
+  io34_gpio: GPIO34      # ADC input (input only)
+  io35_gpio: GPIO35      # ADC input (input only)
+  io4_gpio: GPIO4        # PWM 2
+  io0_gpio: GPIO0        # PWM 1
+  io2_gpio: GPIO2        # PWM 0
+
   # Project Information
   project_name: "CodeMakesItGo.Target"
-  project_version: "3.0.0"
+  project_version: "1.0.0"
 
 # ==============================================================================
 # EXTERNAL PACKAGES
@@ -67,8 +68,6 @@ esphome:
       - number.set:
           id: target_cooldown_control
           value: !lambda 'return id(cooldown_timer);'
-      # Enable auxiliary power
-      - switch.turn_on: aux_pwr
       # Wait for components to initialize
       - delay: 500ms
       # Log startup completion
@@ -78,13 +77,16 @@ esp32:
   board: wemos_d1_mini32
   framework:
     type: arduino
+    version: recommended
   flash_size: 4MB
 
 # ==============================================================================
 # NETWORK & DEBUGGING
 # ==============================================================================
 logger:
-  level: DEBUG 
+  level: DEBUG
+  logs:
+    adc: INFO  # Reduce ADC-related log spam
   
 web_server: # Target web page
   port: 80
@@ -106,59 +108,65 @@ sensor:
     name: "Uptime Sensor"
     update_interval: 60s  # Reduce frequency for less spam
     
-  # Analog voltage measurement on GPIO34 - Reverted to old syntax
+  # Analog voltage measurement on GPIO34 
   - platform: adc
-    pin: ${io34_gpio}
+    pin: 
+      number: ${io34_gpio}
     name: "GPIO34 Voltage"
     update_interval: 5s
     accuracy_decimals: 2
     unit_of_measurement: "V"
+    attenuation: 12db  # Explicit attenuation for 0-3.3V range
+    raw: false
     filters:
       - multiply: 3.3
       - offset: -0.25
       - lambda: 'return std::max(0.0f, x);'
-    # Add alert for low voltage
     on_value_range:
       - below: 0.5
         then:
           - logger.log: "WARNING: Low voltage detected on GPIO34"
+          
+  # Analog voltage measurement on GPIO35 
+  - platform: adc
+    pin: 
+      number: ${io35_gpio}
+    name: "GPIO35 Voltage"
+    update_interval: 5s
+    accuracy_decimals: 2
+    unit_of_measurement: "V"
+    attenuation: 12db  # Explicit attenuation for 0-3.3V range
+    raw: false
+    filters:
+      - multiply: 3.3
+      - offset: -0.25
+      - lambda: 'return std::max(0.0f, x);'
+    on_value_range:
+      - below: 0.5
+        then:
+          - logger.log: "WARNING: Low voltage detected on GPIO35"
 
 # ==============================================================================
 # BINARY SENSORS - Digital Inputs
 # ==============================================================================
 binary_sensor:
-  # GPIO16 Digital Input
+  
+  # GPIO21 Digital Input
   - platform: gpio
     pin:
-      number: ${io16_gpio}
+      number: ${io21_gpio}
       mode: INPUT_PULLUP
       inverted: true
-    name: "GPIO16 Digital State"
-    device_class: "motion"
-    filters:
-      - delayed_on: 50ms   # Increase debounce
-      - delayed_off: 50ms
-    on_press:
-      - logger.log: "GPIO16 state is HIGH"
-    on_release:
-      - logger.log: "GPIO16 state is LOW"
-      
-  # GPIO17 Digital Input
-  - platform: gpio
-    pin:
-      number: ${io17_gpio}
-      mode: INPUT_PULLUP
-      inverted: true
-    name: "GPIO17 Digital State"
+    name: "GPIO21 Digital State"
     device_class: "motion"
     filters:
       - delayed_on: 10ms
       - delayed_off: 10ms
     on_press:
-      - logger.log: "GPIO17 state is HIGH"
+      - logger.log: "GPIO21 state is HIGH"
     on_release:
-      - logger.log: "GPIO17 state is LOW"
-      
+      - logger.log: "GPIO21 state is LOW"
+
   # GPIO25 Digital Input
   - platform: gpio
     pin:
@@ -175,6 +183,37 @@ binary_sensor:
     on_release:
       - logger.log: "GPIO25 state is LOW"
 
+  # GPIO32 Digital Input
+  - platform: gpio
+    pin:
+      number: ${io32_gpio}
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "GPIO32 Digital State"
+    device_class: "motion"
+    filters:
+      - delayed_on: 10ms
+      - delayed_off: 10ms
+    on_press:
+      - logger.log: "GPIO32 state is HIGH"
+    on_release:
+      - logger.log: "GPIO32 state is LOW"
+
+  # GPIO33 Digital Input
+  - platform: gpio
+    pin:
+      number: ${io33_gpio}
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "GPIO33 Digital State"
+    device_class: "motion"
+    filters:
+      - delayed_on: 10ms
+      - delayed_off: 10ms
+    on_press:
+      - logger.log: "GPIO33 state is HIGH"
+    on_release:
+      - logger.log: "GPIO33 state is LOW"
 # ==============================================================================
 # INFRARED RECEIVER
 # ==============================================================================
@@ -270,14 +309,12 @@ script:
             ESP_LOGW("target_hit", "Relay already active!");
           }
       - switch.turn_on: relay_1
-      - switch.turn_on: gnd_swtch
       
       # Hold relay for configured time while hit effect displays
       - delay: !lambda 'return id(relay_timer);'
       
       # Deactivate outputs
       - switch.turn_off: relay_1
-      - switch.turn_off: gnd_swtch
       
       # Continue displaying hit effect until total hit_display_time is reached
       - delay: !lambda |-
@@ -353,42 +390,17 @@ light:
       - addressable_twinkle:
           name: Twinkle Effect
 
-  # Secondary LED Strip (Configurable count)
+  # Placeholder LED Strip 2 (not connected in rev1 hardware)
   - platform: esp32_rmt_led_strip
     chipset: WS2812
-    rmt_symbols: 128 
+    rmt_symbols: 64
     rgb_order: RGB
-    pin: ${led2_gpio}
-    num_leds: ${strip_2_led_count}
+    pin: ${io22_gpio}  # Using available GPIO22
+    num_leds: 1
     name: "LED Strip 2"
     id: led_strip2
-    default_transition_length: 500ms
-    color_correct: [100%, 100%, 100%]
+    internal: true  # Hide from UI since it's not used
     restore_mode: RESTORE_DEFAULT_OFF
-    effects:
-      - addressable_rainbow:
-          name: Rainbow Effect
-          speed: 10
-          width: 50
-      - addressable_color_wipe:
-          name: Color Wipe Effect
-          colors:
-            - red: 100%
-              green: 0%
-              blue: 0%
-              num_leds: 1
-            - red: 0%
-              green: 100%
-              blue: 0%
-              num_leds: 1
-            - red: 0%
-              green: 0%
-              blue: 100%
-              num_leds: 1
-      - addressable_scan:
-          name: Scanner Effect
-      - addressable_twinkle:
-          name: Twinkle Effect
 
 # ==============================================================================
 # SWITCHES - Digital Outputs
@@ -401,20 +413,6 @@ switch:
     name: "Relay"
     id: relay_1
 
-  # Auxiliary power control
-  - platform: gpio
-    pin:
-      number: ${aux_pwr_gpio}
-    name: "Aux Pwr"
-    id: aux_pwr
-
-  # Ground switch (12V control)
-  - platform: gpio
-    pin:
-      number: ${switch_12v}
-    name: "Gnd Switch"
-    id: gnd_swtch
-
   # Test button for manual hit simulation
   - platform: template
     name: "Test Button"
@@ -426,18 +424,6 @@ switch:
       - switch.turn_off:
           id: test_button
 
-# ==============================================================================
-# SERVO CONTROL
-# ==============================================================================
-servo:
-  - id: servo1
-    output: pwm_output
-
-output:
-  - platform: ledc
-    id: pwm_output
-    pin: ${servo_gpio}
-    frequency: 50 Hz
 
 # ==============================================================================
 # USER CONTROLS - Numbers and Selects
@@ -478,24 +464,6 @@ number:
           int value = static_cast<int>(x); 
           id(cooldown_timer) = value;
           ESP_LOGI("config", "Cooldown timer set to: %d ms", value);
-
-  # Servo position control
-  - platform: template
-    name: "Servo Slider"
-    id: servo_slider
-    min_value: -85
-    max_value: 85
-    step: 1
-    initial_value: 0
-    restore_value: true
-    optimistic: true
-    icon: "mdi:arrow-expand-horizontal"
-    set_action:
-      - servo.write:
-          id: servo1
-          level: !lambda 'return (x / 100.0);'
-      - lambda: |-
-          id(servo_slider).publish_state(x);
 
 select:
   # Hit effect selection
