@@ -52,7 +52,8 @@ wifi:
 
 # Enable Home Assistant API
 api:
-
+  reboot_timeout: 5min  # Allow longer API operations
+  
 # Captive portal for setting up Wi-Fi via AP
 captive_portal:
 
