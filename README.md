@@ -261,7 +261,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Contributors**: Everyone who has helped improve this project
 
 ## 📞 Support
-- **Documentation**:  [Documents Folder](../../../Documents/)
+- **Documentation**:  [Documents Folder](./documents/)
 - **Email Questions**: [email: jason.altice@codemakesitgo.com](mailto:jason.altice@codemakesitgo.com)
 ---
 
