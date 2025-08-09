@@ -228,6 +228,8 @@ remote_receiver:
   tolerance: 25%
   filter: 100us
   idle: 40ms
+ 
+  # NEC protocol (most common)
   on_nec:
     then:
       - if:
@@ -236,12 +238,32 @@ remote_receiver:
           then:
             # Process IR command - keep debug logging if needed for troubleshooting
             - lambda: |-
-                ESP_LOGI("ir_debug", "Address: 0x%04X, Command: 0x%02X", x.address, x.command & 0xFF);
+                ESP_LOGI("ir_debug", "NEC - Address: 0x%04X, Command: 0x%02X", x.address, x.command & 0xFF);
                 id(ir_command) = x.command & 0xFF;  // Store full 16-bit command
             - script.execute: target_hit_script
             - logger.log: "IR Command Completed"    
           else:
             - logger.log: "IR Command Ignored (disabled)"
+
+  # Pronto protocol - for your specific remote
+  on_pronto:
+    then:
+      - if:
+          condition:
+            - lambda: 'return id(ir_enabled);'
+          then:
+            - lambda: |-
+                ESP_LOGI("ir_pronto", "Pronto signal received - Data length: %zu", x.data.size());
+                if (x.data.size() >= 4) {
+                  ESP_LOGI("ir_pronto", "First 4 values: 0x%04X 0x%04X 0x%04X 0x%04X", 
+                    x.data[0], x.data[1], x.data[2], x.data[3]);
+                }
+                // Use a simple hash of the data as the command
+                id(ir_command) = x.data.size() > 0 ? x.data[0] & 0xFF : 0;
+            - script.execute: target_hit_script
+            - logger.log: "Pronto IR Command Completed"
+          else:
+            - logger.log: "Pronto IR Command Ignored (disabled)"
 
 # ==============================================================================
 # SCRIPTS - Target Logic (moved to separate files)
