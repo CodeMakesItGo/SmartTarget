@@ -1,0 +1,65 @@
+# ==============================================================================
+# NEATO SMART TARGET - MAIN CONFIGURATION FILE
+# ==============================================================================
+# This is the PRIMARY configuration file that assembles all target components.
+# It includes hardware definitions, network configuration, IR protocols,
+# and optional integrations like FPP (Falcon Player) support.
+#
+# Usage:
+#   esphome run target_main.yaml
+#   esphome -s id 0001 run target_main.yaml  (to override the ID)
+# ==============================================================================
+
+# ==============================================================================
+# SUBSTITUTIONS - Device Identification
+# ==============================================================================
+substitutions:
+  id: "0001"                     # CHANGE THIS: Unique identifier (use 0001-9999 format)
+  name: target-${id}             
+  friendly_name: "NEATO Target ${id}"
+
+# ==============================================================================
+# EXTERNAL PACKAGES
+# ==============================================================================
+packages:
+  # - For Rev 1.x targets uncomment the next line
+  #target_rev_file: !include boards/target_rev1_x.yaml
+  # - For Rev 3.x targets uncomment the next line
+  target_rev_file: !include boards/target_rev3_x.yaml
+
+  # Change this manually when changing target_type:
+  # - For standalone: uncomment the next line
+  #config_file: !include configs/target_standalone_config.yaml
+  # - For networked: uncomment the next two lines
+  config_file: !include configs/target_networked_config.yaml
+
+  # IR receiver configuration
+  #ir_receiver: !include protocols/ir_nec.yaml
+  #ir_receiver: !include protocols/ir_raw.yaml
+  ir_receiver: !include protocols/ir_laser_tag.yaml
+
+  # Falcon Player Packages (only for networked targets)
+  # Uncomment BOTH lines below to enable FPP support
+  fpp_file: !include integrations/target_fpp.yaml
+
+# ==============================================================================
+# TARGET HIT SCRIPTS - what to do when target is hit
+# ==============================================================================
+script:
+  # Main Hit Script - do these things when target is hit
+  - id: run_hit_script
+    mode: parallel  
+    then:
+      - script.execute: target_hit_script
+      # Uncomment the next line when FPP package is enabled above
+      - script.execute: fpp_start_playlist
+      # Uncomment the next line when you want the target to send an ESPHome event to Home Assistant server
+      #- script.execute: esphome_hit_script
+
+# ==============================================================================
+# DEBUGGING
+# ==============================================================================
+logger:
+  #level: WARN  # Reduced from DEBUG to prevent mobile browser overload
+  level: DEBUG  
+  #baud_rate: 0  # Disable serial logging to free up resources 

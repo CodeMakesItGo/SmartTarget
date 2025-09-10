@@ -1,8 +1,8 @@
 # ==============================================================================
-# NETWORKED TARGET SCRIPTS
+# TARGET HIT SCRIPTS - general target hit behavior 
 # ==============================================================================
 script:
-  # Main Target Hit Script - Networked version with Home Assistant integration
+  # Main Target Hit Script - Standalone version
   - id: target_hit_script
     mode: single  # Prevent overlapping hits
     then:
@@ -12,13 +12,14 @@ script:
           id: ir_enabled
           value: 'false'
       
-      # Send Home Assistant event
-      - homeassistant.event:
-          event: esphome.target-hit
-          data:  
-            address: ${ip}
-            player: !lambda 'return id(ir_command);'
-            points: ${default_points}
+      # Disable auto-save during hit processing to prevent overwriting saved effect
+      - globals.set:
+          id: hit_processing
+          value: 'true'
+      
+      # Log hit information for standalone mode
+      - lambda: |-
+          ESP_LOGI("target_hit", "Hit detected - Player: %d, Points: ${default_points}", id(ir_command));
       
       - delay: 100ms
       
@@ -71,6 +72,12 @@ script:
           int remaining_display = ${hit_display_time} - id(relay_timer);
           return std::max(0, remaining_display);
       
+      # LEDs off during cooldown
+      - light.turn_off: led_strip 
+      
+      # Final cooldown period
+      - delay: !lambda 'return id(cooldown_timer);'
+
       # Restore original effect
       - lambda: |-
           std::string effect_name = "Scanner Effect";  // Default fallback
@@ -88,11 +95,15 @@ script:
           call.perform();
           ESP_LOGI("target_hit", "Restored effect: %s", effect_name.c_str());
       
-      # Final cooldown period
-      - delay: !lambda 'return id(cooldown_timer);'
       
-      # Re-enable IR
+      # Re-enable auto-save and IR
+      - globals.set:
+          id: hit_processing
+          value: 'false'
       - globals.set:
           id: ir_enabled
           value: 'true'
       - logger.log: "Target hit processing complete"
+
+
+ 

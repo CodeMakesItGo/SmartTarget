@@ -1,0 +1,157 @@
+# ==============================================================================
+# NETWORKED TARGET CONFIGURATION
+# ==============================================================================
+# This configuration sets up a target device in networked mode with Home Assistant
+# integration. In networked mode, the target communicates with a central controller
+# and can be managed through Home Assistant or other ESPHome-compatible systems.
+# ==============================================================================
+
+# ==============================================================================
+# SUBSTITUTIONS - Configuration Variables
+# ==============================================================================
+substitutions:
+  # Target IP - uncomment and set for static IP configuration
+  #ip: "2"                    # CHANGE THIS for static IP: Last part of IP address (02-99)
+    
+  # Network Configuration - uncomment and set these for static IP configuration 
+  #ip_base: 192.168.8.
+  #ip_addr: ${ip_base}${ip}   # Results in 192.168.8.2 if ip is "2"
+
+# ==============================================================================
+# WIFI CONFIGURATION - Network Setup & Management
+# ==============================================================================
+wifi:
+  # Customer WiFi configuration (leave empty for first-time setup)
+  # ssid: !secret wifi_ssid
+  # password: !secret wifi_password
+  
+  # For production units, customers will configure through captive portal
+  # For development, uncomment the lines above and use secrets.yaml
+  
+  # Enable WiFi network scanning for setup
+  # fast_connect: true  # Disabled for first-time setup
+  
+  # DHCP is recommended for customer networks (more compatible)
+  # Static IP configuration only for development/testing:
+  # manual_ip:
+  #   static_ip: ${ip_addr}
+  #   gateway: ${ip_base}1
+  #   subnet: 255.255.255.0
+  #   dns1: ${ip_base}1
+  #   dns2: 8.8.8.8
+  
+  # Setup WiFi hotspot for customer configuration
+  ap:
+    ssid: "${name}"
+    password: "target123"  # Simple password for initial setup
+  
+  # Connection management
+  reboot_timeout: 10min     # Reboot after 10 minutes of WiFi loss (balanced approach)
+  power_save_mode: none     # Disable power saving for reliability
+  output_power: 20dB        # Maximum WiFi power for best range
+  
+  on_connect:
+    then:
+      - logger.log: "WiFi connected successfully"
+  
+  on_disconnect:
+    then:
+      - logger.log: "WiFi disconnected"
+
+# ==============================================================================
+# API & REMOTE ACCESS - Home Assistant Integration
+# ==============================================================================
+api:
+  reboot_timeout: 0s    # Disable auto-reboot if not using a Home Assistant server
+  #reboot_timeout: 5min  # Reboot the device if no connection to Home Assistant for 5 minutes
+  
+# ==============================================================================
+# CAPTIVE PORTAL & DASHBOARD - Initial Setup
+# ==============================================================================
+# Captive portal for customer WiFi setup
+captive_portal:
+
+# Import configuration package
+dashboard_import:
+  package_import_url: github://esphome/example-configs/esphome-web/esp32.yaml@main
+  import_full_config: true
+
+# ==============================================================================
+# SENSORS - System Monitoring & Diagnostics
+# ==============================================================================
+sensor:
+# WiFi signal strength monitoring (indirect power quality indicator)
+  - platform: wifi_signal
+    name: "WiFi Signal Strength"  
+    id: wifi_strength
+    update_interval: 30s  # Increased for mobile compatibility
+    filters:
+      - sliding_window_moving_average:
+          window_size: 5
+          send_every: 5
+    accuracy_decimals: 0
+    unit_of_measurement: "dBm"
+    # Poor WiFi can indicate power supply issues
+    on_value_range:
+      - below: -80  # Very weak signal might indicate power issues
+        then:
+          - logger.log: "⚠ Weak WiFi signal detected - possible power supply issue"
+
+# ==============================================================================
+# BUTTONS - User Controls & System Management
+# ==============================================================================
+# WiFi Reset Button - Clear saved WiFi credentials and restart in AP mode
+button:
+  - platform: template
+    name: "WiFi Reset"
+    id: wifi_reset_button
+    icon: "mdi:wifi-off"
+    on_press:
+      then:
+        - logger.log: "🔄 Performing factory reset to clear WiFi credentials..."
+        - button.press: factory_reset_button
+
+  # Factory Reset Button - Clears all stored preferences including WiFi credentials  
+  - platform: factory_reset
+    name: "Factory Reset"
+    id: factory_reset_button
+    icon: "mdi:restart-alert"
+
+# ==============================================================================
+# TEXT SENSORS - Network Information & Status
+# ==============================================================================
+# WiFi connection status sensor for debugging network issues
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "WiFi IP Address"
+    ssid:
+      name: "WiFi SSID"
+    mac_address:
+      name: "WiFi MAC Address"
+# Optional: Physical button on GPIO for WiFi reset (uncomment if needed)
+# binary_sensor:
+#   - platform: gpio
+#     pin:
+#       number: GPIO0  # Change to your button pin
+#       mode: INPUT_PULLUP
+#       inverted: true
+#     name: "Physical WiFi Reset Button"
+#     on_press:
+#       then:
+#         - button.press: wifi_reset_button  
+
+# ==============================================================================
+# Target Hit Script - ESPHome/Home Assistant integration
+# ==============================================================================
+script:
+  - id: esphome_hit_script
+    mode: single  # Prevent overlapping hits
+    then:     
+       # Send Home Assistant event
+      - homeassistant.event:
+          event: esphome.target-hit
+          data:  
+            address: ${id}
+            player: !lambda 'return id(ir_command);'
+            points: ${default_points}

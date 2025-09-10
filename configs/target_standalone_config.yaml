@@ -1,0 +1,26 @@
+# ==============================================================================
+# STANDALONE TARGET CONFIGURATION
+# ==============================================================================
+# This configuration sets up a target device in standalone mode.
+# In standalone mode, the target operates independently without requiring
+# a central controller or Home Assistant integration.
+# ==============================================================================
+
+
+# ==============================================================================
+# NETWORK CONFIGURATION
+# ==============================================================================
+wifi:
+  # AP configuration for standalone mode
+  ap:
+    ssid: "${name}"
+    password: "target123"  # Simple password for initial setup
+  
+  # Connection management for better reliability
+  reboot_timeout: 0s        # Disable auto-reboot on WiFi loss  
+  power_save_mode: none     # Disable power saving for reliability
+  output_power: 20dB        # Maximum WiFi power for best range
+  
+  on_connect:
+    then:
+      - logger.log: "WiFi AP mode activated"
