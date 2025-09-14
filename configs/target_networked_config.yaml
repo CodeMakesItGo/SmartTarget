@@ -59,6 +59,17 @@ wifi:
       - logger.log: "WiFi disconnected"
 
 # ==============================================================================
+# NETWORK & WEB INTERFACE - Common Services
+# ==============================================================================
+web_server: # Target web page
+  port: 80
+  include_internal: false
+  local: false
+  css_include: "boards/common/custom.css"
+  js_include: "boards/common/custom.js"
+  version: 2
+
+# ==============================================================================
 # API & REMOTE ACCESS - Home Assistant Integration
 # ==============================================================================
 api:

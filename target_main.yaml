@@ -6,15 +6,17 @@
 # and optional integrations like FPP (Falcon Player) support.
 #
 # Usage:
-#   esphome run target_main.yaml
-#   esphome -s id 0001 run target_main.yaml  (to override the ID)
+#   esphome run target_main.yaml                    (starts with ID 0000)
+#   esphome -s id 0001 run target_main.yaml        (starts with ID 0001)
+#   Then adjust Target ID via web interface number control
 # ==============================================================================
 
 # ==============================================================================
 # SUBSTITUTIONS - Device Identification
 # ==============================================================================
 substitutions:
-  id: "0001"                     # CHANGE THIS: Unique identifier (use 0001-9999 format)
+  # Default ID - override with -s id XXXX command line parameter
+  id: "0000"                     # Default target ID
   name: target-${id}             
   friendly_name: "NEATO Target ${id}"
 
@@ -29,18 +31,18 @@ packages:
 
   # Change this manually when changing target_type:
   # - For standalone: uncomment the next line
-  #config_file: !include configs/target_standalone_config.yaml
+  config_file: !include configs/target_standalone_config.yaml
   # - For networked: uncomment the next two lines
-  config_file: !include configs/target_networked_config.yaml
+  #config_file: !include configs/target_networked_config.yaml
 
   # IR receiver configuration
-  #ir_receiver: !include protocols/ir_nec.yaml
+  ir_receiver: !include protocols/ir_nec.yaml
   #ir_receiver: !include protocols/ir_raw.yaml
-  ir_receiver: !include protocols/ir_laser_tag.yaml
+  #ir_receiver: !include protocols/ir_laser_tag.yaml
 
   # Falcon Player Packages (only for networked targets)
   # Uncomment BOTH lines below to enable FPP support
-  fpp_file: !include integrations/target_fpp.yaml
+  #fpp_file: !include integrations/target_fpp.yaml
 
 # ==============================================================================
 # TARGET HIT SCRIPTS - what to do when target is hit
@@ -52,7 +54,7 @@ script:
     then:
       - script.execute: target_hit_script
       # Uncomment the next line when FPP package is enabled above
-      - script.execute: fpp_start_playlist
+      #- script.execute: fpp_start_playlist
       # Uncomment the next line when you want the target to send an ESPHome event to Home Assistant server
       #- script.execute: esphome_hit_script
 
@@ -60,6 +62,6 @@ script:
 # DEBUGGING
 # ==============================================================================
 logger:
-  #level: WARN  # Reduced from DEBUG to prevent mobile browser overload
-  level: DEBUG  
-  #baud_rate: 0  # Disable serial logging to free up resources 
+  level: WARN  # Reduced from DEBUG to prevent mobile browser overload
+  #level: DEBUG  
+  baud_rate: 0  # Disable serial logging to free up resources 

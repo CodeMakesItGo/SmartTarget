@@ -58,15 +58,7 @@ esp32:
     version: recommended
   flash_size: 4MB
 
-# ==============================================================================
-# NETWORK & WEB INTERFACE - Common Services
-# ==============================================================================
-web_server: # Target web page
-  port: 80
-  include_internal: false
-  css_include: "boards/common/custom.css"
-  js_include: "boards/common/custom.js"
-  version: 2
+
 
 # Allow Over-The-Air updates
 ota: 
@@ -347,7 +339,7 @@ globals:
   - id: saved_brightness
     type: float
     restore_value: yes
-    initial_value: '0.5'  # 50% default brightness
+    initial_value: '1.0'  # 100% default brightness
     
   # Saved LED colors (0.0 to 1.0)
   - id: saved_red

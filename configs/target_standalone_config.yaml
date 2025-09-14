@@ -24,3 +24,14 @@ wifi:
   on_connect:
     then:
       - logger.log: "WiFi AP mode activated"
+
+# ==============================================================================
+# NETWORK & WEB INTERFACE - Common Services
+# ==============================================================================
+web_server: # Target web page
+  port: 80
+  include_internal: false
+  local: true
+  css_include: "boards/common/custom.css"
+  js_include: "boards/common/custom.js"
+  version: 2
