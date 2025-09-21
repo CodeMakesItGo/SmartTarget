@@ -14,9 +14,7 @@ remote_receiver:
   buffer_size: 10kB      # Large buffer for complex signals
   
   # Multiple dump modes for debugging (comment out in production)
-  dump: 
-    #- raw
-    #- nec
+  dump: nec
     
   # Optimized NEC support 
   on_nec:

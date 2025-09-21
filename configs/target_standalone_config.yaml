@@ -8,18 +8,27 @@
 
 
 # ==============================================================================
-# NETWORK CONFIGURATION
+# NETWORK CONFIGURATION - STANDALONE MODE (AP ONLY)
 # ==============================================================================
 wifi:
-  # AP configuration for standalone mode
+  # Force AP-only mode - do not connect to any networks
+  networks: []     # Empty networks list
+  
+  # Explicitly disable station mode
+  enable_on_boot: true
+  fast_connect: false
+  
+  # AP configuration for standalone mode  
   ap:
     ssid: "${name}"
-    password: "target123"  # Simple password for initial setup
+    password: "target123"
+    ap_timeout: 1min
   
-  # Connection management for better reliability
+  # Disable station mode and prevent network scanning
   reboot_timeout: 0s        # Disable auto-reboot on WiFi loss  
   power_save_mode: none     # Disable power saving for reliability
   output_power: 20dB        # Maximum WiFi power for best range
+  passive_scan: true        # Reduce active network scanning
   
   on_connect:
     then:

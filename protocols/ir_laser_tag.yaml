@@ -21,7 +21,7 @@ remote_receiver:
       pullup: true
   tolerance: 25%
   filter: 50us          # Filter noise
-  idle: 4ms             # Signal end detection
+  idle: 10ms             # Signal end detection
   buffer_size: 10kB     # Large buffer for complex signals
   
   # Dump raw timing for analysis (comment out in production)
